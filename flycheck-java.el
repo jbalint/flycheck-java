@@ -84,6 +84,12 @@
                    :options (plist-get flycheck-java-standard-java-project-def :options)
                    ) ecp)))
 
+(defun flycheck-java-read-project-def (dir)
+  "Read a project definition which should be a raw plist"
+  (with-temp-buffer
+	(insert-file-contents (concat dir "/" flycheck-java-lisp-project-file-name))
+	(read (buffer-string))))
+
 (defun flycheck-java-match-project-def (dir project-def)
   "Try to match source directory DIR to java project template PROJECT-DEF.  If successful return project type and root directory, otherwise return nil."
   (let* ((paths (-map 'car (plist-get project-def :paths)))
@@ -111,8 +117,8 @@
     (pcase (car project)
       (:eclipse (flycheck-java-read-eclipse-project root-dir))
       (:custom
-       (cons (cons 'project-dir root-dir)
-             (flycheck-java-read-project-def root-dir)))
+       (append `(:project-dir ,root-dir)
+			   (flycheck-java-read-project-def root-dir)))
       (:standard (append `(:project-dir ,root-dir) flycheck-java-standard-java-project-def))
       (:else
        (error "unable to determine project root and type")))))
