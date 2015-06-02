@@ -100,6 +100,7 @@
     (if match
         (cons (plist-get project-def :type) (nth 1 match))))
   )
+
 ;; returns tuple of type and root directory of the project
 (defun flycheck-java-find-project (dir)
   ""
@@ -143,14 +144,14 @@
          (src-paths (--map (concat root "/" (car it)) paths))
          (dst-paths (--map (concat root "/" (cdr it)) paths))
          (libs (plist-get p :libs))
+		 (options (split-string (plist-get p :options) " ")) ;; TODO: just make the options a list instead of a string to avoid quoting issues
          (expanded-libs (if libs libs (flycheck-java-expand-lib-paths root (plist-get p :lib-paths))))
          (source-path (--reduce (concat acc ":" it) src-paths))
          (class-path (--reduce (concat acc ":" it)
                                (-flatten (list dst-paths (--map (concat root "/" it) expanded-libs))))))
-    (append (list "-source"
-                  (plist-get p :source)
-                  "-target"
-                  (plist-get p :source)
+    (append options
+			(list "-source" (plist-get p :source)
+                  "-target" (plist-get p :target)
                   "-classpath" class-path)
             (if flycheck-java-no-sourcepath nil `("-sourcepath" ,source-path)))))
 
@@ -164,7 +165,6 @@
       (setq-local flycheck-java-project project-def)
       (setq-local flycheck-java-cmdopts opts)))
   flycheck-java-cmdopts)
-
 
 (flycheck-define-checker java
   "Java syntax checker using ecj batch compiler."
